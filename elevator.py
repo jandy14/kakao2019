@@ -71,8 +71,8 @@ def choosePassenger(elevator, candidate):
     i['start'] in [p['end'] for p in elevator[0]['passengers']] or i['start'] in [p['start'] for p in elevator[1]],
     i['end'] in [p['end'] for p in elevator[0]['passengers']] or i['end'] in [p['start'] for p in elevator[1]],
     -abs(i['start'] - elevator[0]['floor']), i) for i in candidate ]
-    test.sort(reversed=True)
-    return [i[-1]['id'] for i in test[:MAXPASSENGER - len(elevator[0]['passengers']) + len(elevator[1])]
+    test.sort(reverse=True)
+    return [i[-1]['id'] for i in test[:MAXPASSENGER - len(elevator[0]['passengers']) + len(elevator[1])]]
 def p0_allocate(elevator, calls):
     if elevator[0]['passengers'] + elevator[1]:
         if not elevator[0]['passengers']:
@@ -90,9 +90,9 @@ def p0_allocate(elevator, calls):
         if getDirection(elevator) == 'STOP':
             raise
         final = choosePassenger(elevator,candidate)
-        [ elevator[1].append(i), calls.remove(i) for i in candidate if i['id'] in final ]
+        [ (elevator[1].append(i), calls.remove(i)) for i in candidate if i['id'] in final ]
     else:
-        d_candidate = sorted([i for i in calls if i['start'] > i['end']], key=lambda x: x['start'], reversed=True)
+        d_candidate = sorted([i for i in calls if i['start'] > i['end']], key=lambda x: x['start'], reverse=True)
         u_candidate = sorted([i for i in calls if i['start'] < i['end']], key=lambda x: x['start'])
         candidate = None
         if elevator[2] == 'UP':
@@ -110,13 +110,13 @@ def p0_allocate(elevator, calls):
             else:
                 pass
         if candidate:
-            [ elevator[1].append(i), calls.remove(i) for i in candidate if i['start'] == candidate[0]['start'] ]
+            [ (elevator[1].append(i), calls.remove(i)) for i in candidate if i['start'] == candidate[0]['start'] ]
 def simulator():
     user = 'jandy'
     problem = 0
     count = 4
     token = init(user, problem, count)
-    elevators = [ [i,[],"DOWN"] for i in oncalls(token)['calls'] ]
+    elevators = [ [i,[],"DOWN"] for i in oncalls(token)['elevators'] ]
     is_end = False
     while not is_end:
         cmd = []
@@ -130,6 +130,8 @@ def simulator():
         for e in elevators:
             cmd.append(makeCommand(e))
         # action
+        print(respond)
+        print(cmd)
         is_end = action(token, cmd)['is_end']
         # do something to do after action
         for i,c in enumerate(cmd):
