@@ -17,38 +17,35 @@ def action(token, cmds):
 def init(user, problem, count):
     ret = start(user, problem, count)
     return ret['token']
-def posibleElevator(elevators, passenger):
-    for e in elevators:
-        pass
-    return None
-def potentialPassenger(elevator, passengers):
-    passenger = []
-    for p in passengers:
-        pass
-    return None
+def makeCommand(elevator):
+    pass
+def allocatePassenger(elevator,calls):
+    pass
 def p0_simulator():
     user = 'jandy'
     problem = 0
     count = 4
     token = init(user, problem, count)
-    elevators = []
-    progressing = []
-    waiting = []
+    elevators = [ [i,[],"DOWN"] for i in oncalls(token)['calls'] ]
     is_end = False
     while not is_end:
         cmd = []
         respond = oncalls(token)
         # something algorithm
         call = respond['calls']
-        elev = respond['elevators']
-        waiting += [i for i in call if i not in progressing and i not in waiting]
-        for e in elev:
-            # check to get elevators
-            index = posibleElevator(elev, w)
-            # if w can get elevator, w get elevator and w move to progressing
-
+        elevators = [ [n] + o[1:] for o,n in zip(elevators,respond['elevators']) ]
+        # allocate elevator
+        for e in elevators:
+            allocatePassenger(e,call)
+        # make command based on condition of elevator
+        for e in elevators:
+            cmd.append(makeCommand(e))
         # action
         is_end = action(token, cmd)['is_end']
+        # do something to do after action
+        for i,c in enumerate(cmd):
+            if c['command'] in ['ENTER','EXIT']:
+                elevators[i][1] = [ p for p in elevators[i] if p['id'] not in c['call_ids'] ]
     print("Done!")
     print
 if __name__ == '__main__':
