@@ -17,8 +17,38 @@ def action(token, cmds):
 def init(user, problem, count):
     ret = start(user, problem, count)
     return ret['token']
+def getDirection(elevator):
+    direction = 'STOP'
+    if elevator[0]['floor'] > elevator[0]['passengers'][0]['end']:
+        direction = 'DOWN'
+    else:
+        direction = 'UP'
+    return direction
 def makeCommand(elevator):
-    pass
+    elev = elevator[0]
+    if elev['status'] in ['OPENED', 'STOPPED']:
+        if elev['floor'] in [ i['end'] for i in elev['passengers']]:
+            if elev['status'] == 'OPENED':
+                return {'elevator_id': elev['id'], 'command': 'EXIT', 'call_ids':[ i['id'] for i in elev['passengers'] if i['end'] == elev['floor']]}
+            if elev['status'] == 'STOPPED':
+                return {'elevator_id': elev['id'], 'command': 'OPEN'}
+        elif elev['floor'] in [ i['start'] for i in elevator[1]]:
+            if elev['status'] == 'OPENED':
+                return {'elevator_id': elev['id'], 'command': 'ENTER', 'call_ids':[ i['id'] for i in elevator[1] if i['start'] == elev['floor']]}
+            if elev['status'] == 'STOPPED':
+                return {'elevator_id': elev['id'], 'command': 'OPEN'}
+        else:
+            if elev['status'] == 'OPENED':
+                return {'elevator_id': elev['id'], 'command': 'CLOSE'}
+            if elev['status'] == 'STOPPED':
+                return {'elevator_id': elev['id'], 'command': getDirection(elevator)}
+    else:
+        if elev['floor'] in [ i['end'] for i in elev['passengers']]:
+            return {'elevator_id': elev['id'], 'command': 'STOP'}
+        elif elev['floor'] in [ i['start'] for i in elevator[1]]:
+            return {'elevator_id': elev['id'], 'command': 'STOP'}
+        else:
+            return {'elevator_id': elev['id'], 'command': getDirection(elevator)}
 def allocatePassenger(elevator,calls):
     pass
 def p0_simulator():
@@ -45,8 +75,9 @@ def p0_simulator():
         # do something to do after action
         for i,c in enumerate(cmd):
             if c['command'] in ['ENTER','EXIT']:
-                elevators[i][1] = [ p for p in elevators[i] if p['id'] not in c['call_ids'] ]
+                elevators[i][1] = [ p for p in elevators[i][1] if p['id'] not in c['call_ids'] ]
+            if c['command'] in ['DOWN','UP']:
+                elevators[i][2] = c['command']
     print("Done!")
-    print
 if __name__ == '__main__':
     p0_simulator()
