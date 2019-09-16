@@ -19,10 +19,13 @@ def init(user, problem, count):
     return ret['token']
 def getDirection(elevator):
     direction = 'STOP'
-    if elevator[0]['floor'] > elevator[0]['passengers'][0]['end']:
-        direction = 'DOWN'
-    else:
+    dest = [ i['end'] for i in elevator[0]['passengers']] + [ i['start'] for i in elevator[1] ]
+    if not dest:
+        return direction
+    if all(i >= elevator[0]['floor'] for i in dest):
         direction = 'UP'
+    if all(i <= elevator[0]['floor'] for i in dest):
+        direction = 'DOWN'
     return direction
 def makeCommand(elevator):
     elev = elevator[0]
