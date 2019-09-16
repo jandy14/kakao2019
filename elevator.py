@@ -22,11 +22,19 @@ def getDirection(elevator):
     dest = [ i['end'] for i in elevator[0]['passengers']] + [ i['start'] for i in elevator[1] ]
     if not dest:
         return direction
-    if all(i >= elevator[0]['floor'] for i in dest):
+    if all(i == elevator[0]['floor'] for i in dest):
+        if [ i['start'] for i in elevator[1] ]:
+            direction = elevator[2]
+        else:
+            direction = 'UP' if elevator[2] == 'DOWN' else 'DOWN'
+    elif all(i >= elevator[0]['floor'] for i in dest):
         direction = 'UP'
-    if all(i <= elevator[0]['floor'] for i in dest):
+    elif all(i <= elevator[0]['floor'] for i in dest):
         direction = 'DOWN'
+
     if direction == 'STOP':
+        print('==============================')
+        print(elevator)
         raise
     return direction
 def makeCommand(elevator):
@@ -61,6 +69,8 @@ def allocatePassenger(elevators,calls):
         passengers = elevator[0]['passengers']
         progressing = elevator[1]
         if len(passengers) + len(progressing) > MAXPASSENGER:
+            print('===========================')
+            print(elevator)
             raise
         elif len(passengers) + len(progressing) == MAXPASSENGER:
             continue
@@ -70,9 +80,9 @@ def choosePassenger(elevator, candidate):
     test = [ (i['start']==elevator[0]['floor'],
     i['start'] in [p['end'] for p in elevator[0]['passengers']] or i['start'] in [p['start'] for p in elevator[1]],
     i['end'] in [p['end'] for p in elevator[0]['passengers']] or i['end'] in [p['start'] for p in elevator[1]],
-    -abs(i['start'] - elevator[0]['floor']), i) for i in candidate ]
+    -abs(i['start'] - elevator[0]['floor']), i['id']) for i in candidate ]
     test.sort(reverse=True)
-    return [i[-1]['id'] for i in test[:MAXPASSENGER - len(elevator[0]['passengers']) + len(elevator[1])]]
+    return [i[-1] for i in test[:MAXPASSENGER - len(elevator[0]['passengers']) - len(elevator[1])]]
 def p0_allocate(elevator, calls):
     if elevator[0]['passengers'] + elevator[1]:
         if not elevator[0]['passengers']:
@@ -84,9 +94,9 @@ def p0_allocate(elevator, calls):
                     return
         candidate = []
         if getDirection(elevator) == 'UP':
-            candidate = [ i for i in calls if i['start'] >= elevator[0]['floor']]
+            candidate = [ i for i in calls if i['start'] >= elevator[0]['floor'] and i['end'] > i['start']]
         if getDirection(elevator) == 'DOWN':
-            candidate = [ i for i in calls if i['start'] <= elevator[0]['floor']]
+            candidate = [ i for i in calls if i['start'] <= elevator[0]['floor'] and i['end'] < i['start']]
         if getDirection(elevator) == 'STOP':
             raise
         final = choosePassenger(elevator,candidate)
@@ -110,18 +120,20 @@ def p0_allocate(elevator, calls):
             else:
                 pass
         if candidate:
-            [ (elevator[1].append(i), calls.remove(i)) for i in candidate if i['start'] == candidate[0]['start'] ]
+            candidate = [i for i in candidate if i['start'] == candidate[0]['start']]
+            [ (elevator[1].append(i), calls.remove(i)) for i in candidate[:MAXPASSENGER] ]
 def simulator():
-    user = 'jandy'
-    problem = 0
+    user = 'other'
+    problem = 1
     count = 4
     token = init(user, problem, count)
     elevators = [ [i,[],"DOWN"] for i in oncalls(token)['elevators'] ]
     is_end = False
     while not is_end:
+        # initiating
+        print('-----------------------')
         cmd = []
         respond = oncalls(token)
-        # something algorithm
         call = respond['calls']
         elevators = [ [n] + o[1:] for o,n in zip(elevators,respond['elevators']) ]
         # allocate elevator
@@ -130,8 +142,15 @@ def simulator():
         for e in elevators:
             cmd.append(makeCommand(e))
         # action
-        print(respond)
-        print(cmd)
+
+        for c in call:
+            print(c)
+        for e in elevators:
+            print(e[0])
+            print(e[1])
+            print(e[2])
+        for c in cmd:
+            print(c)
         is_end = action(token, cmd)['is_end']
         # do something to do after action
         for i,c in enumerate(cmd):
