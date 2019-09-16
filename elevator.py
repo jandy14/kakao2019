@@ -131,7 +131,6 @@ def simulator():
     is_end = False
     while not is_end:
         # initiating
-        print('-----------------------')
         cmd = []
         respond = oncalls(token)
         call = respond['calls']
@@ -142,7 +141,9 @@ def simulator():
         for e in elevators:
             cmd.append(makeCommand(e))
         # action
-
+        is_end = action(token, cmd)['is_end']
+        # log
+        print('-----------------------')
         for c in call:
             print(c)
         for e in elevators:
@@ -151,7 +152,6 @@ def simulator():
             print(e[2])
         for c in cmd:
             print(c)
-        is_end = action(token, cmd)['is_end']
         # do something to do after action
         for i,c in enumerate(cmd):
             if c['command'] in ['ENTER','EXIT']:
