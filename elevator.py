@@ -65,7 +65,7 @@ def makeCommand(elevator):
 def allocatePassenger(elevators,calls):
     for elevator in elevators:
         calls = [ p for p in calls if p not in elevator[1]]
-    for elevator in elevators:
+    for i,elevator in enumerate(elevators):
         passengers = elevator[0]['passengers']
         progressing = elevator[1]
         if len(passengers) + len(progressing) > MAXPASSENGER:
@@ -75,7 +75,15 @@ def allocatePassenger(elevators,calls):
         elif len(passengers) + len(progressing) == MAXPASSENGER:
             continue
         else:
-            p0_allocate(elevator,calls)
+            # p0_allocate(elevator,calls)
+            if i == 0:
+                p2_0_allocate(elevator,calls)
+            elif i == 1:
+                p2_1_allocate(elevator,calls)
+            elif i == 2:
+                p2_2_allocate(elevator,calls)
+            elif i == 3:
+                p2_3_allocate(elevator,calls)
 def choosePassenger(elevator, candidate):
     test = [ (i['start']==elevator[0]['floor'],
     i['start'] in [p['end'] for p in elevator[0]['passengers']] or i['start'] in [p['start'] for p in elevator[1]],
@@ -122,9 +130,174 @@ def p0_allocate(elevator, calls):
         if candidate:
             candidate = [i for i in candidate if i['start'] == candidate[0]['start']]
             [ (elevator[1].append(i), calls.remove(i)) for i in candidate[:MAXPASSENGER] ]
+def p2_0_allocate(elevator,calls): # only work in floor 1 and floor 13
+    if elevator[0]['passengers'] + elevator[1]:
+        if not elevator[0]['passengers']:
+            if getDirection(elevator) == 'UP':
+                if [i for i in elevator[1] if i['start'] > i['end']]:
+                    return
+            else:
+                if [i for i in elevator[1] if i['start'] < i['end']]:
+                    return
+        candidate = []
+        if getDirection(elevator) == 'UP':
+            candidate = [ i for i in calls if i['start'] == 1 and i['end'] == 13 and elevator[0]['floor'] == 1]
+        if getDirection(elevator) == 'DOWN':
+            candidate = [ i for i in calls if i['start'] == 13 and i['end'] == 1 and elevator[0]['floor'] == 13]
+        if getDirection(elevator) == 'STOP':
+            raise
+        final = choosePassenger(elevator,candidate)
+        [ (elevator[1].append(i), calls.remove(i)) for i in candidate if i['id'] in final ]
+    else:
+        d_candidate = sorted([i for i in calls if i['start'] == 13 and i['end'] == 1], key=lambda x: x['start'], reverse=True)
+        u_candidate = sorted([i for i in calls if i['start'] == 1 and i['end'] == 13], key=lambda x: x['start'])
+        if not(u_candidate or d_candidate):
+            p2_3_allocate(elevator, calls)
+            return
+        candidate = None
+        if elevator[2] == 'UP':
+            if d_candidate:
+                candidate = d_candidate
+            elif u_candidate:
+                candidate = u_candidate
+            else:
+                pass
+        else:
+            if u_candidate:
+                candidate = u_candidate
+            elif d_candidate:
+                candidate = d_candidate
+            else:
+                pass
+        if candidate:
+            candidate = [i for i in candidate if i['start'] == candidate[0]['start']]
+            [ (elevator[1].append(i), calls.remove(i)) for i in candidate[:MAXPASSENGER] ]
+def p2_1_allocate(elevator,calls): # work in floor 1 and above floar 13
+    if elevator[0]['passengers'] + elevator[1]:
+        if not elevator[0]['passengers']:
+            if getDirection(elevator) == 'UP':
+                if [i for i in elevator[1] if i['start'] > i['end']]:
+                    return
+            else:
+                if [i for i in elevator[1] if i['start'] < i['end']]:
+                    return
+        candidate = []
+        if getDirection(elevator) == 'UP':
+            candidate = [ i for i in calls if i['start'] >= elevator[0]['floor'] and i['end'] > i['start'] and not (1 < i['start'] < 14 or 1 < i['end'] < 14)]
+        if getDirection(elevator) == 'DOWN':
+            candidate = [ i for i in calls if i['start'] <= elevator[0]['floor'] and i['end'] < i['start'] and not (1 < i['start'] < 14 or 1 < i['end'] < 14)]
+        if getDirection(elevator) == 'STOP':
+            raise
+        final = choosePassenger(elevator,candidate)
+        [ (elevator[1].append(i), calls.remove(i)) for i in candidate if i['id'] in final ]
+    else:
+        d_candidate = sorted([i for i in calls if i['start'] > i['end'] and not (1 < i['start'] < 14 or 1 < i['end'] < 14)], key=lambda x: x['start'], reverse=True)
+        u_candidate = sorted([i for i in calls if i['start'] < i['end'] and not (1 < i['start'] < 14 or 1 < i['end'] < 14)], key=lambda x: x['start'])
+        if not(u_candidate or d_candidate):
+            p2_3_allocate(elevator, calls)
+            return
+        candidate = None
+        if elevator[2] == 'UP':
+            if d_candidate:
+                candidate = d_candidate
+            elif u_candidate:
+                candidate = u_candidate
+            else:
+                pass
+        else:
+            if u_candidate:
+                candidate = u_candidate
+            elif d_candidate:
+                candidate = d_candidate
+            else:
+                pass
+        if candidate:
+            candidate = [i for i in candidate if i['start'] == candidate[0]['start']]
+            [ (elevator[1].append(i), calls.remove(i)) for i in candidate[:MAXPASSENGER] ]
+def p2_2_allocate(elevator,calls): # work in below floar 13
+    if elevator[0]['passengers'] + elevator[1]:
+        if not elevator[0]['passengers']:
+            if getDirection(elevator) == 'UP':
+                if [i for i in elevator[1] if i['start'] > i['end']]:
+                    return
+            else:
+                if [i for i in elevator[1] if i['start'] < i['end']]:
+                    return
+        candidate = []
+        if getDirection(elevator) == 'UP':
+            candidate = [ i for i in calls if i['start'] >= elevator[0]['floor'] and i['end'] > i['start'] and i['start'] < 13 and i['end'] < 13]
+        if getDirection(elevator) == 'DOWN':
+            candidate = [ i for i in calls if i['start'] <= elevator[0]['floor'] and i['end'] < i['start'] and i['start'] < 13 and i['end'] < 13]
+        if getDirection(elevator) == 'STOP':
+            raise
+        final = choosePassenger(elevator,candidate)
+        [ (elevator[1].append(i), calls.remove(i)) for i in candidate if i['id'] in final ]
+    else:
+        d_candidate = sorted([i for i in calls if i['start'] > i['end'] and i['start'] < 13 and i['end'] < 13], key=lambda x: x['start'], reverse=True)
+        u_candidate = sorted([i for i in calls if i['start'] < i['end'] and i['start'] < 13 and i['end'] < 13], key=lambda x: x['start'])
+        if not(u_candidate or d_candidate):
+            p2_3_allocate(elevator, calls)
+            return
+        candidate = None
+        if elevator[2] == 'UP':
+            if d_candidate:
+                candidate = d_candidate
+            elif u_candidate:
+                candidate = u_candidate
+            else:
+                pass
+        else:
+            if u_candidate:
+                candidate = u_candidate
+            elif d_candidate:
+                candidate = d_candidate
+            else:
+                pass
+        if candidate:
+            candidate = [i for i in candidate if i['start'] == candidate[0]['start']]
+            [ (elevator[1].append(i), calls.remove(i)) for i in candidate[:MAXPASSENGER] ]
+def p2_3_allocate(elevator,calls): # allrounder
+    if elevator[0]['passengers'] + elevator[1]:
+        if not elevator[0]['passengers']:
+            if getDirection(elevator) == 'UP':
+                if [i for i in elevator[1] if i['start'] > i['end']]:
+                    return
+            else:
+                if [i for i in elevator[1] if i['start'] < i['end']]:
+                    return
+        candidate = []
+        if getDirection(elevator) == 'UP':
+            candidate = [ i for i in calls if i['start'] >= elevator[0]['floor'] and i['end'] > i['start']]
+        if getDirection(elevator) == 'DOWN':
+            candidate = [ i for i in calls if i['start'] <= elevator[0]['floor'] and i['end'] < i['start']]
+        if getDirection(elevator) == 'STOP':
+            raise
+        final = choosePassenger(elevator,candidate)
+        [ (elevator[1].append(i), calls.remove(i)) for i in candidate if i['id'] in final ]
+    else:
+        d_candidate = sorted([i for i in calls if i['start'] > i['end']], key=lambda x: x['start'], reverse=True)
+        u_candidate = sorted([i for i in calls if i['start'] < i['end']], key=lambda x: x['start'])
+        candidate = None
+        if elevator[2] == 'UP':
+            if d_candidate:
+                candidate = d_candidate
+            elif u_candidate:
+                candidate = u_candidate
+            else:
+                pass
+        else:
+            if u_candidate:
+                candidate = u_candidate
+            elif d_candidate:
+                candidate = d_candidate
+            else:
+                pass
+        if candidate:
+            candidate = [i for i in candidate if i['start'] == candidate[0]['start']]
+            [ (elevator[1].append(i), calls.remove(i)) for i in candidate[:MAXPASSENGER] ]
 def simulator():
     user = 'other'
-    problem = 1
+    problem = 2
     count = 4
     token = init(user, problem, count)
     elevators = [ [i,[],"DOWN"] for i in oncalls(token)['elevators'] ]
